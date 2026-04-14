@@ -1,0 +1,16 @@
+# Окружение
+myenv/
+venv/
+env/
+
+# Кэш Python
+__pycache__/
+*.pyc
+
+# Настройки IDE (PyCharm)
+.idea/
+
+# Логи и временные файлы
+*.log
+
+
