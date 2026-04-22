@@ -13,4 +13,11 @@ __pycache__/
 # Логи и временные файлы
 *.log
 
+# Other
+database.py
+requirements.txt
+settings.py
+.env
+
+
 
