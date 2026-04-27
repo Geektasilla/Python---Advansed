@@ -18,6 +18,8 @@ database.py
 requirements.txt
 settings.py
 .env
+lessons/
+PW/
 
 
 
