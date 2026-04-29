@@ -18,6 +18,11 @@ database.py
 requirements.txt
 settings.py
 .env
+community_pulse/
+config.py
+lessons/
+
+
 
 
 
