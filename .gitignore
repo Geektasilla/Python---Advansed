@@ -20,6 +20,8 @@ settings.py
 .env
 lessons/
 PW/
+config.py
+community_pulse
 
 
 

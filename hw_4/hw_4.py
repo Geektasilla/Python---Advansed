@@ -19,14 +19,14 @@ Base = declarative_base()
 class Category(Base):
     __tablename__ = 'category'
     id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
+    name = Column(String(100))
+    description = Column(String(255))
     products = relationship("Product", back_populates="category")
 
 class Product(Base):
     __tablename__ = 'product'
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(100))
     price = Column(Numeric(10, 2))
     in_stock = Column(Boolean)
     category_id = Column(Integer, ForeignKey('category.id'))
@@ -66,15 +66,15 @@ if not session.query(Product).first():
 # Для каждой категории извлеките и выведите все связанные с ней продукты,
 # включая их названия и цены.
 
-all_categories = session.query(Category).all()
-for category in all_categories:
-    print(f"Категория: {category.name}")
-    products_in_category = session.query(Product).filter(Product.category_id == category.id).all()
-    if category.products:
-        for product in category.products:
-            print(f"Название: {product.name}, Цена: {product.price}")
-    else:
-        print("Продуктов нет")
+data = session.query(Category, Product).join(Product).all()
+current_category = None
+for category, product in data:
+    if category.id != current_category:
+        print(f"\nКатегория: {category.name}")
+        current_category = category.id
+    print(f' - {product.name}: {product.price}')
+
+
 
 # Задача 3: Обновление данных
 # Найдите в таблице products первый продукт с названием "Смартфон".
