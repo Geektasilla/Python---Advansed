@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
-# from pydantic import ValidationError # Больше не используется в этом файле
+from pydantic import ValidationError
 from app.models import db, Question, Category
-# from app.schemas.question import QuestionUpdate, QuestionOut # QuestionUpdate больше не используется
-from app.schemas.question import QuestionOut # Оставляем QuestionOut для других эндпоинтов
+from app.schemas.question import QuestionCreate, QuestionResponse, QuestionOut
 from typing import List
 
 # Создаем Blueprint для вопросов
@@ -10,35 +9,28 @@ questions_bp = Blueprint('questions', __name__, url_prefix='/questions')
 
 @questions_bp.route('/', methods=['GET'])
 def get_questions():
-    """Получение списка всех вопросов с их категориями."""
+    """Получение списка всех вопросов."""
     questions = db.session.query(Question).all()
-    questions_out = [QuestionOut.from_orm(q).dict() for q in questions]
-    return jsonify(questions_out)
+    questions_data = [QuestionResponse.model_validate(q).model_dump() for q in questions]
+    return jsonify(questions_data), 200
 
 @questions_bp.route('/', methods=['POST'])
 def create_question():
     """Создание нового вопроса."""
-    data = request.get_json()
+    try:
+        question_data = QuestionCreate.model_validate_json(request.data)
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
 
-    if not data or not data.get('text'):
-        return jsonify({'error': 'No question text provided'}), 400
-
-    text = data['text']
-    category_id = data.get('category_id') # Получаем category_id, если он есть
-
-    # Опционально: можно добавить проверку существования категории
-    if category_id is not None:
-        category = db.session.query(Category).get(category_id)
-        if category is None:
-            return jsonify({'error': f'Category with id {category_id} not found'}), 400
-
-    question = Question(text=text, category_id=category_id)
+    question = Question(
+        text=question_data.text,
+        category_id=question_data.category_id
+    )
     db.session.add(question)
     db.session.commit()
-    db.session.refresh(question) # Обновляем объект, чтобы получить id и связанные данные
+    db.session.refresh(question)
 
-    # Возвращаем созданный вопрос, используя QuestionOut для форматирования
-    return jsonify(QuestionOut.from_orm(question).dict()), 201
+    return jsonify(QuestionResponse(id=question.id, text=question.text).model_dump()), 201
 
 @questions_bp.route('/<int:id>', methods=['GET'])
 def get_question(id):
@@ -46,13 +38,11 @@ def get_question(id):
     question = db.session.query(Question).filter(Question.id == id).one_or_none()
     if question is None:
         return jsonify({"message": "Вопрос не найден"}), 404
-
     return jsonify({'message': f"Вопрос: {question.text}"}), 200
 
 @questions_bp.route('/<int:id>', methods=['PUT'])
 def update_question(id):
     """Обновление конкретного вопроса по его ID."""
-
     question = db.session.query(Question).filter(Question.id == id).one_or_none()
     if question is None:
         return jsonify({'message': "Вопрос с таким ID не найден"}), 404
@@ -61,9 +51,7 @@ def update_question(id):
 
     if data and data.get('text'):
         question.text = data['text']
-        # Добавим обновление категории, если оно есть в запросе
         if 'category_id' in data:
-            # Можно добавить проверку существования категории, как в create_question
             category_id = data['category_id']
             if category_id is not None:
                 category = db.session.query(Category).get(category_id)
@@ -78,7 +66,6 @@ def update_question(id):
 @questions_bp.route('/<int:id>', methods=['DELETE'])
 def delete_question(id):
     """Удаление конкретного вопроса по его ID."""
-
     question = db.session.query(Question).filter(Question.id == id).one_or_none()
     if question is None:
         return jsonify({'message': "Вопрос с таким ID не найден"}), 404
