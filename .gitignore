@@ -1,28 +1,14 @@
-# Окружение
-myenv/
+# Виртуальные окружения
 venv/
+myenv/
 env/
 
 # Кэш Python
 __pycache__/
 *.pyc
 
-# Настройки IDE (PyCharm)
+# Настройки IDE
 .idea/
 
 # Логи и временные файлы
 *.log
-
-# Other
-database.py
-requirements.txt
-settings.py
-.env
-community_pulse/
-config.py
-lessons/
-
-
-
-
-
