@@ -1,13 +1,17 @@
-# Здесь будут Pydantic схемы для валидации и сериализации данных вопросов
-# Например:
-# from pydantic import BaseModel
-#
-# class QuestionCreate(BaseModel):
-#     text: str
-#
-# class QuestionOut(BaseModel):
-#     id: int
-#     text: str
-#
-#     class Config:
-#         orm_mode = True
+from pydantic import BaseModel
+from typing import Optional
+from .category import CategoryOut # Импортируем схему для категории
+
+class QuestionBase(BaseModel):
+    text: str
+    category_id: Optional[int] = None
+
+class QuestionCreate(QuestionBase):
+    pass
+
+class QuestionOut(QuestionBase):
+    id: int
+    category: Optional[CategoryOut] = None # Включаем вложенную схему категории
+
+    class Config:
+        from_attributes = True
