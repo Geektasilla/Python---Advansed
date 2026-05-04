@@ -7,12 +7,13 @@ class QuestionBase(BaseModel):
     category_id: Optional[int] = None
 
 class QuestionCreate(QuestionBase):
-    pass
+    category_id: Optional[int] = None
 
 class QuestionResponse(BaseModel):
     id: int
     text: str
-    
+    category: Optional[CategoryOut] = None
+
     model_config = ConfigDict(
         from_attributes=True
     )
@@ -24,3 +25,9 @@ class QuestionOut(QuestionBase):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+class CategoryBase(BaseModel):
+    name: str = Field(..., min_length=3, description="Название категории")
+
+
+

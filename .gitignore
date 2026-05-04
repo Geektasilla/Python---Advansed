@@ -12,3 +12,5 @@ __pycache__/
 
 # Логи и временные файлы
 *.log
+tasks.md
+STEPS/

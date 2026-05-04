@@ -1,7 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
+# Импортируем db из центрального файла extensions
+from ..extensions import db
 
-db = SQLAlchemy()
-
+# Теперь импортируем модели, чтобы SQLAlchemy мог их обнаружить
 from .response import Response
 from .questions import Question, Statistic
-from .category import Category # Добавляем импорт для новой модели Category
+from .category import Category

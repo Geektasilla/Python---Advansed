@@ -1,36 +1,45 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from app.models import db, Question, Category
-from app.schemas.question import QuestionCreate, QuestionResponse, QuestionOut
-from typing import List
+from ..extensions import db  # Изменено
+from ..models import Question, Category
+from ..schemas.question import QuestionCreate, QuestionResponse, QuestionOut
+from sqlalchemy.orm import joinedload
 
 # Создаем Blueprint для вопросов
 questions_bp = Blueprint('questions', __name__, url_prefix='/questions')
 
+
 @questions_bp.route('/', methods=['GET'])
 def get_questions():
     """Получение списка всех вопросов."""
-    questions = db.session.query(Question).all()
-    questions_data = [QuestionResponse.model_validate(q).model_dump() for q in questions]
-    return jsonify(questions_data), 200
+    questions = db.session.query(Question).options(joinedload(Question.category)).all()
+
+    # questions = [QuestionResponse.model_validate(q).model_dump() for q in questions]
+    return jsonify([QuestionOut.model_validate(q).model_dump() for q in questions]), 200
+
 
 @questions_bp.route('/', methods=['POST'])
 def create_question():
-    """Создание нового вопроса."""
+    data = request.get_json()
     try:
-        question_data = QuestionCreate.model_validate_json(request.data)
-    except ValidationError as e:
-        return jsonify(e.errors()), 400
+        question_data = QuestionCreate(**data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-    question = Question(
-        text=question_data.text,
-        category_id=question_data.category_id
-    )
-    db.session.add(question)
+    new_question = Question(text=question_data.text)
+
+    if question_data.category_id:
+        category = db.session.get(Category, question_data.category_id)
+        if not category:
+            return jsonify({"error": "Category not found"}), 404
+        new_question.category = category  # Связываем вопрос с категорией
+
+    db.session.add(new_question)
     db.session.commit()
-    db.session.refresh(question)
 
-    return jsonify(QuestionResponse(id=question.id, text=question.text).model_dump()), 201
+    db.session.refresh(new_question)
+    return jsonify(QuestionOut.model_validate(new_question).model_dump()), 201
+
 
 @questions_bp.route('/<int:id>', methods=['GET'])
 def get_question(id):
@@ -39,6 +48,7 @@ def get_question(id):
     if question is None:
         return jsonify({"message": "Вопрос не найден"}), 404
     return jsonify({'message': f"Вопрос: {question.text}"}), 200
+
 
 @questions_bp.route('/<int:id>', methods=['PUT'])
 def update_question(id):
@@ -62,6 +72,7 @@ def update_question(id):
         return jsonify({'message': f"Вопрос обновлен: {question.text}"}), 200
 
     return jsonify({'message': "Текст вопроса не предоставлен"}), 400
+
 
 @questions_bp.route('/<int:id>', methods=['DELETE'])
 def delete_question(id):

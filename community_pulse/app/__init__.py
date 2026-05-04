@@ -2,8 +2,10 @@ from flask import Flask
 from .routers.questions import questions_bp
 from .routers.response import response_bp
 from config import DevelopmentConfig
-from .models import db
+from .extensions import db  # Изменено
 from flask_migrate import Migrate
+from .routers.categories import categories_bp
+
 
 def create_app():
     app = Flask(__name__)
@@ -13,4 +15,5 @@ def create_app():
     migrate.init_app(app, db, directory='app/migrations')
     app.register_blueprint(questions_bp)
     app.register_blueprint(response_bp)
+    app.register_blueprint(categories_bp)
     return app
